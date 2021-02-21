@@ -13,16 +13,9 @@ import org.uom.idp.exceptions.PublicKeyException;
 import org.uom.idp.exceptions.VerifyLicenseKeyException;
 import org.uom.idp.utils.Constants;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.logging.Logger;
-import java.io.FileInputStream;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 
@@ -55,22 +48,21 @@ public class LicenseValidator {
      *
      * @param agentArgument Argument passed for the Java agent
      */
-    public JsonObject premain(final String agentArgument) throws VerifyLicenseKeyException, DecodeLicenseKeyException, Exception {
+    public JsonObject premain(final String agentArgument) throws Exception {
         DecodedJWT decodedJWT = decodeLicenseKey(agentArgument);
-        verifyLicenseKey(decodedJWT);
-        return createOutput("true");
+        return createOutput(verifyLicenseKey(decodedJWT));
     }
 
     /**
      * This method create the output Object
      *
-     * @param jwt       JWT token
+     * @param statusMsg       Status Message
      * @return JsonObject
      */
-    private JsonObject createOutput(String jwt) {
+    private JsonObject createOutput(String statusMsg) {
 
         JsonObject output = new JsonObject();
-        output.addProperty("success", jwt);
+        output.addProperty("status", statusMsg);
         return output;
     }
 
@@ -148,9 +140,9 @@ public class LicenseValidator {
      * @throws PublicKeyException        If cannot construct the public certificate
      * @throws VerifyLicenseKeyException If the token is invalid
      */
-    private static void verifyLicenseKey(final DecodedJWT decodedJWT)
+    private static String verifyLicenseKey(final DecodedJWT decodedJWT)
             throws Exception, VerifyLicenseKeyException {
-
+        String status = "failed";
         Algorithm algorithm = Algorithm.RSA384(getRSAPublicKey(), null);
         JWTVerifier verifier = JWT.require(algorithm)
                 .withIssuer(Constants.ISSUER)
@@ -158,13 +150,15 @@ public class LicenseValidator {
         // Verify Expire date + signature
         try {
             verifier.verify(decodedJWT);
+            status = "success";
         } catch (TokenExpiredException e) {
-            throw new VerifyLicenseKeyException("License key has expired", e);
+            status = "License key has expired";
         } catch (InvalidClaimException e) {
-            throw new VerifyLicenseKeyException("Issuer is invalid", e);
+            status = "Issuer is invalid";
         } catch (JWTVerificationException e) {
-            throw new VerifyLicenseKeyException("Signature is invalid", e);
+            status = "Signature is invalid";
         }
+        return status;
     }
 
 }
