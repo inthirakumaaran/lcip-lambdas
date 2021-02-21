@@ -22,6 +22,9 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.logging.Logger;
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
 
 import static org.uom.idp.utils.Constants.*;
 
@@ -52,9 +55,9 @@ public class LicenseValidator {
      *
      * @param agentArgument Argument passed for the Java agent
      */
-    public JsonObject premain(final String agentArgument) throws VerifyLicenseKeyException, DecodeLicenseKeyException, PublicKeyException {
+    public JsonObject premain(final String agentArgument) throws VerifyLicenseKeyException, DecodeLicenseKeyException, Exception {
         DecodedJWT decodedJWT = decodeLicenseKey(agentArgument);
-//        verifyLicenseKey(decodedJWT);
+        verifyLicenseKey(decodedJWT);
         return createOutput("true");
     }
 
@@ -89,35 +92,19 @@ public class LicenseValidator {
      * @return public key {@link RSAPublicKey}
      * @throws PublicKeyException If cannot construct the public certificate
      */
-    private static RSAPublicKey getRSAPublicKey() throws PublicKeyException {
-        byte[] fileContent;
-        try (InputStream inputStream = getPublicKeyFileStream();
-             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = inputStream.read(buffer)) != -1) {
-                byteArrayOutputStream.write(buffer, 0, len);
-            }
-            byteArrayOutputStream.flush();
-            fileContent = byteArrayOutputStream.toByteArray();
-        } catch (IOException e) {
-            String errMsg = String.format("Couldn't load the public key file: %s", PUBLIC_KEY);
-            throw new PublicKeyException(errMsg, e);
-        }
-        X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(fileContent);
-        KeyFactory kf;
-        try {
-            kf = KeyFactory.getInstance(ALGORITHM_RSA);
-        } catch (NoSuchAlgorithmException e) {
-            throw new PublicKeyException(String.format("Couldn't find the algorithm %s", ALGORITHM_RSA), e);
-        }
-        RSAPublicKey publicKey;
-        try {
-            publicKey = (RSAPublicKey) kf.generatePublic(keySpecX509);
-        } catch (InvalidKeySpecException e) {
-            throw new PublicKeyException("Invalid public key", e);
-        }
-        return publicKey;
+    private static RSAPublicKey getRSAPublicKey() throws Exception {
+        RSAPublicKey publicKey = null;
+        String alias = "wso2carbon";
+        String password = "wso2carbon";
+
+        InputStream file = LicenseValidator.class.getClassLoader().getResourceAsStream("wso2carbon.jks");
+        KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keystore.load(file, password.toCharArray());
+
+        // Get certificate of public key
+        Certificate cert = keystore.getCertificate(alias);
+        return (RSAPublicKey) cert.getPublicKey();
+
     }
 
     /**
@@ -131,7 +118,7 @@ public class LicenseValidator {
      * @throws DecodeLicenseKeyException If the JWT is not valid
      */
     private static DecodedJWT decodeLicenseKey(String licenseKey) throws DecodeLicenseKeyException {
-        
+
         DecodedJWT decodedJWT = JWT.decode(licenseKey);
         if (decodedJWT.getIssuer() == null) {
             throw new DecodeLicenseKeyException("Issuer claim is not defined");
@@ -162,9 +149,9 @@ public class LicenseValidator {
      * @throws VerifyLicenseKeyException If the token is invalid
      */
     private static void verifyLicenseKey(final DecodedJWT decodedJWT)
-            throws PublicKeyException, VerifyLicenseKeyException {
+            throws Exception, VerifyLicenseKeyException {
 
-        Algorithm algorithm = Algorithm.RSA256(getRSAPublicKey(), null);
+        Algorithm algorithm = Algorithm.RSA384(getRSAPublicKey(), null);
         JWTVerifier verifier = JWT.require(algorithm)
                 .withIssuer(Constants.ISSUER)
                 .build();
