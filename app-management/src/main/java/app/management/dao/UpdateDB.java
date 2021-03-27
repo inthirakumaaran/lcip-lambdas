@@ -1,9 +1,8 @@
 package app.management.dao;
 
 import org.hibernate.exception.ConstraintViolationException;
-import org.hibernate.exception.JDBCConnectionException;
 import app.management.exception.DBException;
-import app.management.model.entity.UserDataEntity;
+import app.management.model.entity.ApplicationDataEntity;
 
 import java.util.Random;
 import javax.persistence.EntityManager;
@@ -34,8 +33,6 @@ public class UpdateDB {
         this.maxRetries = maxRetries;
         this.retryInterval = retryInterval;
     }
-
-
 
     /**
      * Helper method to get a new {@link EntityManager} object.
@@ -98,7 +95,7 @@ public class UpdateDB {
         throw new DBException("Connection failed. QueryTimeoutException occurred.");
     }
 
-    public void removeEntity(String name, int id) throws DBException {
+    public void removeEntity(String name, String id) throws DBException {
 
         int numAttempts = 0;
         EntityManager entityManager = getEntityManager();
@@ -106,10 +103,10 @@ public class UpdateDB {
             numAttempts++;
             try {
                 entityManager.getTransaction().begin();
-                UserDataEntity userDataEntity = new UserDataEntity();
-                userDataEntity.setId(id);
-                userDataEntity.setUsername(name);
-                UserDataEntity data =  entityManager.find(UserDataEntity.class,  userDataEntity);
+                ApplicationDataEntity applicationDataEntity = new ApplicationDataEntity();
+                applicationDataEntity.setId(id);
+                applicationDataEntity.setAppName(name);
+                ApplicationDataEntity data =  entityManager.find(ApplicationDataEntity.class, applicationDataEntity);
                 entityManager.remove(data);
                 entityManager.getTransaction().commit();
                 entityManager.close();
@@ -133,14 +130,6 @@ public class UpdateDB {
         throw new DBException("Connection failed. QueryTimeoutException occurred.");
     }
 
-    /**
-     * Helper method to analyze the {@link PersistenceException}. If the {@link PersistenceException} is not occurred
-     * due to a {@link com.mysql.jdbc.CommunicationsException} or a {@link JDBCConnectionException}, it will throw a
-     * {@link DBException}. Else, it will wait for the retry interval.
-     *
-     * @param e Persistence user.management.exception
-     * @throws DBException if the error is not a JDBC user.management.exception nor a Communication user.management.exception
-     */
     private void validatePersistenceException(PersistenceException e) throws DBException {
 
         Throwable cause = e.getCause();

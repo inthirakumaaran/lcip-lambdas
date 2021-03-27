@@ -1,4 +1,4 @@
-package user.management.model;
+package app.management.model;
 
 import com.google.gson.annotations.SerializedName;
 

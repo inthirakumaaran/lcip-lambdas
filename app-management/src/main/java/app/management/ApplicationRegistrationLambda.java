@@ -5,9 +5,9 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.google.gson.JsonObject;
 import app.management.dao.UpdateDB;
-import app.management.manager.UserManager;
+import app.management.manager.ApplicationManager;
 import app.management.model.config.Configuration;
-import app.management.model.entity.UserDataEntity;
+import app.management.model.entity.ApplicationDataEntity;
 import app.management.utils.Constants;
 import app.management.utils.Utils;
 
@@ -16,7 +16,7 @@ import java.util.Map;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
-public class UserRegistrationLambda implements RequestHandler<UserDataEntity, Object> {
+public class ApplicationRegistrationLambda implements RequestHandler<ApplicationDataEntity, Object> {
 
     private static Configuration config = Utils.loadConfig(Constants.Configurations.CONFIGURATION_YAML,
                                                            Configuration.class);
@@ -43,28 +43,26 @@ public class UserRegistrationLambda implements RequestHandler<UserDataEntity, Ob
         updateDB = new UpdateDB(emf, 3, 5000);
     }
 
-    private static UserManager userManager = new UserManager(updateDB, config);
+    private static ApplicationManager applicationManager = new ApplicationManager(updateDB, config);
 
     @Override
-    public Object handleRequest(UserDataEntity userData, Context context) {
-        return addUser(userData, context);
+    public Object handleRequest(ApplicationDataEntity userData, Context context) {
+        return addApplication(userData, context);
     }
 
     public static void main(String[] args) {
 
-        addUser();
-//        removeUser("niro" , 1234);
+//        addApplication();
+        removeApplication("App123" , "1234");
     }
 
-    private static void addUser(){
-        UserDataEntity  userData = new UserDataEntity ();
-        userData.setId(1234);
-        userData.setUsername("niro");
-        userData.setUserEmail("niro@wso2.com");
-        userData.setPassword("122121");
+    private static void addApplication(){
+        ApplicationDataEntity userData = new ApplicationDataEntity();
+        userData.setAppName("App123");
+        userData.setCallBackUrl("https://google.com");
         JsonObject response = new JsonObject();
         try {
-            response = userManager.addUser(userData);
+            response = applicationManager.addApplication(userData);
         } catch (Exception e) {
             System.out.println("Exception :: " + e);
             e.printStackTrace();
@@ -72,14 +70,10 @@ public class UserRegistrationLambda implements RequestHandler<UserDataEntity, Ob
         System.out.println("Data added :" + response.toString());
     }
 
-    private static void removeUser(String name, int id){
-        UserDataEntity  userData = new UserDataEntity ();
-        userData.setUsername("niro");
-        userData.setUserEmail("niro@wso2.com");
-        userData.setPassword("122121");
+    private static void removeApplication(String name, String id){
         JsonObject response = new JsonObject();
         try {
-            response = userManager.deletUser(name, id);
+            response = applicationManager.deleteApplication(name, id);
         } catch (Exception e) {
             System.out.println("Exception :: " + e);
             e.printStackTrace();
@@ -87,17 +81,17 @@ public class UserRegistrationLambda implements RequestHandler<UserDataEntity, Ob
         System.out.println("Data added :" + response.toString());
     }
 
-    private Object addUser(UserDataEntity userData, Context context) {
+    private Object addApplication(ApplicationDataEntity userData, Context context) {
         LambdaLogger logger = context.getLogger();
         String okResult = "200 OK";
         // log execution details
-        logger.log("initializing hanlder ");
+        logger.log("initializing handler ");
 
-        //         config = Utils.loadConfig(Constants.Configurations.CONFIGURATION_YAML, Configuration.class);
+         config = Utils.loadConfig(Constants.Configurations.CONFIGURATION_YAML, Configuration.class);
 
         JsonObject response = new JsonObject();
         try {
-            response = userManager.addUser(userData);
+            response = applicationManager.addApplication(userData);
         } catch (Exception e) {
             logger.log("Exception :: " + e);
             e.printStackTrace();

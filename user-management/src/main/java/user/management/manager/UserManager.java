@@ -1,13 +1,11 @@
-package user.management.manager;
+package app.management.manager;
 
 import com.google.gson.JsonObject;
-import com.mysql.jdbc.exceptions.jdbc4.CommunicationsException;
-import org.hibernate.exception.JDBCConnectionException;
-import user.management.dao.UpdateDB;
-import user.management.exception.DBException;
-import user.management.model.UserData;
-import user.management.model.config.Configuration;
-import user.management.model.entity.UserDataEntity;
+
+import app.management.dao.UpdateDB;
+import app.management.exception.DBException;
+import app.management.model.config.Configuration;
+import app.management.model.entity.UserDataEntity;
 
 import javax.persistence.PersistenceException;
 
@@ -64,9 +62,9 @@ public class UserManager {
                 return;
             } catch (PersistenceException e) {
                 Throwable cause = e.getCause();
-                if ((cause instanceof CommunicationsException || cause instanceof JDBCConnectionException)) {
-                    continue;
-                }
+//                if ((cause instanceof CommunicationsException || cause instanceof JDBCConnectionException)) {
+//                    continue;
+//                }
                 throw new RuntimeException(
                         "Exception occurred when creating EntityManagerFactory for the named " + "persistence unit: ",
                         e);
@@ -85,9 +83,9 @@ public class UserManager {
                 return;
             } catch (PersistenceException e) {
                 Throwable cause = e.getCause();
-                if ((cause instanceof CommunicationsException || cause instanceof JDBCConnectionException)) {
-                    continue;
-                }
+//                if ((cause instanceof CommunicationsException || cause instanceof JDBCConnectionException)) {
+//                    continue;
+//                }
                 throw new RuntimeException(
                         "Exception occurred when creating EntityManagerFactory for the named " + "persistence unit: ",
                         e);

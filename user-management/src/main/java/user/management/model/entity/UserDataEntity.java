@@ -1,17 +1,14 @@
-package user.management.model.entity;
+package app.management.model.entity;
 
-import user.management.utils.Constants;
+import app.management.utils.Constants;
 
 import java.io.Serializable;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.io.Serializable;
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
-import javax.persistence.Table;
 
 /**
  * Database Entity.
